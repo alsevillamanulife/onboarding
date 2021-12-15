@@ -8,12 +8,11 @@ import {
     //@ts-ignore
 } from '@manulife/mux-cds-icons';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { gql, useMutation, useQuery, useLazyQuery } from '@apollo/client';
+import { gql, useMutation, useLazyQuery } from '@apollo/client';
 import { useAlert } from 'react-alert';
 import { useParams } from 'react-router-dom';
 import LicenseResults from '../component/LicenseResults';
 import { organizationLabels } from '../labels/organizationLabels';
-
 
 interface FormInput {
     licenseType: string,
@@ -56,7 +55,6 @@ const LicenseModal = () => {
     const [eDate, setEDate] = useState('');
     const [expDate, setExpDate] = useState('');
     const [oType, setOtype] = useState('');
-    console.log('oType',oType);
     const [getData, setGetData] = useState({
         licenseType: '',
         licenseNumber: '',
@@ -75,18 +73,24 @@ const LicenseModal = () => {
         licence: { labels: licenseLabels }
     } = organizationLabels;
 
-      const { control, handleSubmit, reset } = useForm<FormInput>({
+      const { control, handleSubmit } = useForm<FormInput>({
     })
     const [checkDate, {data}] = useLazyQuery(CHECKDATE,{
         nextFetchPolicy: "cache-first",
         onCompleted:()=>{
             if(Array.isArray(data.licenses) && data.licenses.length){
-                alert.error('Date not available');
+                alert.error('Date overlapped check dates');
             }else{
-            createLicense();
+                if (expDate < eDate){
+                    alert.error('Effective date is greater than Expiry Date');
+                }else{
+                    createLicense();
+                   
+                }
             }
         }
     })
+    
     const [createLicense] = useMutation(CREATE_LICENSE,{
         variables:{
             input:{
@@ -103,6 +107,9 @@ const LicenseModal = () => {
             }
         },onCompleted: () => {
             alert.success('License Saved');
+            modalClose();
+            window.location.reload();
+            
         },onError(e){
             alert.error((e as Error).message);
         }

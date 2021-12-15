@@ -7,7 +7,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { gql, useMutation, useQuery, useLazyQuery } from '@apollo/client';
 import { useAlert } from 'react-alert';
 import { useParams } from 'react-router-dom';
-
+import { useHistory } from 'react-router-dom';
 import { organizationLabels } from '../labels/organizationLabels';
 
 interface FormInput {
@@ -64,6 +64,7 @@ const LicenseUpdate = () => {
     const [eDate, setEDate] = useState('');
     const [expDate, setExpDate] = useState('');
     const [oType, setOtype] = useState('');
+    const history = useHistory();
     const [getData, setGetData] = useState({
         id:'',
         effectiveDate:'',
@@ -114,9 +115,13 @@ const LicenseUpdate = () => {
         nextFetchPolicy: "cache-first",
         onCompleted:()=>{
             if(Array.isArray(data.licenses) && data.licenses.length){
-                alert.error('Date not available');
+                alert.error('Date overlapped check dates');
             }else{
+                if (getData.expiryDate < getData.effectiveDate){
+                    alert.error('Effective date is greater than Expiry Date');
+                }else{
                 updateLicense();
+                }
             }
         }
     })
@@ -134,6 +139,7 @@ const LicenseUpdate = () => {
             }
         },onCompleted: () => {
             alert.success('License Saved');
+            history.push(`/organization/${getData.ownerCode}`);
         },onError(e){
             alert.error((e as Error).message);
         }
@@ -152,7 +158,6 @@ const LicenseUpdate = () => {
             }
         });
         setGetData(data);
-        console.log('dateaa',getData);
     }
 
     return (
